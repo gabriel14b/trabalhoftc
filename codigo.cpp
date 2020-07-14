@@ -13,8 +13,9 @@ using namespace std;
 class afd
 {
     char lr[100];
-    int i, est, tran, fecha = 0;
-    bool final;
+    int i = 0, est = 0, tran = 0, fecha = 0, ponto = 0;
+
+    std::vector<int>* final = new std::vector<int>();
     std::vector<int>* from = new std::vector<int>();
     std::vector<int>* to = new std::vector<int>();
     std::vector<char>* input = new std::vector<char>();
@@ -36,6 +37,7 @@ public:
     void uni(int k);
     void inter();
     void sub();
+    void verSenten();
 };
 
 void afd::lerAfd(char a, int k)
@@ -54,6 +56,7 @@ void afd::lerAfd(char a, int k)
 void afd::autom()
 {
     est = 1;
+    final->push_back(false);
     tran = 0;
 
     for  (i = 1; i < 100; i++)
@@ -82,7 +85,7 @@ void afd::autom()
         {
             myfile << "\t\t\t<initial/>&#13;\n";
         }
-        if (final)
+        if (final->at(i))
         {
             myfile << "\t\t\t<final/>&#13;\n";
         }
@@ -105,17 +108,33 @@ void afd::autom()
 
     myfile.close();
 
+
 }
 
 void afd::zer()
 {
     int k = 0;
-    cout << "zer";
-    if (lr[i - 1] == '(' || lr[i - 1] == '+' || lr[i - 1] == '.' || lr[i - 1] == '-')
-        cout << "";
+    if (lr[i - 1] == '(' || lr[i - 1] == '+' || lr[i - 1] == '.' || lr[i - 1] == '-');
+    else if (lr[i + 1] == '*')
+    {
+        tran++;
+        if (lr[i + 2] == '/')
+        {
+            final->push_back(true);
+        }
+        final->push_back(false);
+        from->push_back(est - 1);
+        to->push_back(est - 1);
+        input->push_back('0');
+    }
     else
     {
         tran++;
+        if (lr[i + 1] == '/')
+        {
+            final->push_back(true);
+        }
+        final->push_back(false);
         from->push_back(est - 1);
         to->push_back(est);
         input->push_back('0');
@@ -140,15 +159,30 @@ void afd::zer()
 void afd::um()
 {
     int k = 0;
-    cout << "um";
-    if (lr[i - 1] == '(' || lr[i - 1] == '+' || lr[i - 1] == '.' || lr[i - 1] == '-')
-        cout << "";
+    if (lr[i - 1] == '(' || lr[i - 1] == '+' || lr[i - 1] == '.' || lr[i - 1] == '-');
+    else if (lr[i + 1] == '*')
+    {
+        tran++;
+        if (lr[i + 2] == '/')
+        {
+            final->push_back(true);
+        }
+        final->push_back(false);
+        from->push_back(est - 1);
+        to->push_back(est - 1);
+        input->push_back('1');
+    }
     else
     {
         tran++;
+        if (lr[i + 1] == '/')
+        {
+            final->push_back(true);
+        }
+        final->push_back(false);
         from->push_back(est - 1);
-        to[0].push_back(est);
-        input[0].push_back('1');
+        to->push_back(est);
+        input->push_back('1');
         est++;
     }
     i++;
@@ -193,6 +227,11 @@ void afd::apar()
         fecha = 1;
         ver->at(i) = 0;
     }
+    if (lr[i + 2] == '/')
+    {
+        ponto = 1;
+        ver->at(i) = 0;
+    }
 
 
     for (k = par->back(); k < i; k++)
@@ -223,8 +262,6 @@ void afd::uni(int k)
     int ini, fin, k1, feste, festd, festef, festdf;
     char ftrane = 'a', ftrand;
 
-    cout << "uni";
-
     ini = est;
     k1 = k;
     ver->at(k - 1) = 0;
@@ -232,6 +269,12 @@ void afd::uni(int k)
     for (k; ver->at(k) == 1; k++)
     {
         tran++;
+        if (ponto == 1 && ver->at(k+1) == 0)
+        {
+            final->push_back(true);
+        }
+        else
+            final->push_back(false);
         dir->push_back(lr[k + 1]);
         from->push_back(est - 1);
         to->push_back(est);
@@ -260,6 +303,12 @@ void afd::uni(int k)
         else
             from->push_back(est - 1);
         to->push_back(est);
+        if (ponto == 1 && ver->at(k - 3) == 0)
+        {
+            final->push_back(true);
+        }
+        else
+            final->push_back(false);
         festef = est;
         est++;
         ver->at(k) = 0;
@@ -353,21 +402,92 @@ void afd::sub()
         sub();
 }
 
+void afd::verSenten()
+{
+    int j =0, atual, sent = 1;
+    char ch, op;
+    bool ver = true;
+
+    atual = from->at(0);
+
+    cout << "\n\n\n";
+    fstream sen("sentencas.txt", fstream::in);
+    while (sen >> noskipws >> ch)
+    {
+        cout << ch;
+        if (ver == true && ch != '\n')
+        {
+            for (j = 0; j < tran; j++)
+            {
+                ver = false;
+                if (from->at(j) == atual && input->at(j) == ch)
+                {
+                    atual = to->at(j);
+                    j = tran;
+                    ver = true;
+                }
+            }
+        }
+        else if (ver == true && ch == '\n' && final->at(atual) == 1)
+        {
+            cout << "Sentenca numero " << sent << " pertence a linguagem!\n\n";
+            sent++;
+            atual = from->at(0);
+        }
+        else if (ver == false && ch == '\n' || ch == '\n' && final->at(atual) == 0)
+        {
+            cout << "Sentenca numero " << sent << " nao pertence a linguagem!\n\n";
+            sent++;
+            atual = from->at(0);
+            ver = true;
+        }
+    }
+    if (ver == true)
+    {
+        cout << "\nSentenca numero " << sent << " pertence a linguagem!\n\n";
+    }
+    else if (ver == false)
+    {
+        cout << "\nSentenca numero " << sent << " nao pertence a linguagem!\n\n";
+    }
+
+}
+
 int main() {
 
 
     char ch = ' ';
     char lr[100];
-    int i = 1;
-    fstream fin("Read.txt", fstream::in);
+    int i = 1, ver = 0;
+    fstream fin("Read.jff", fstream::in);
 
     afd ling(ch, i);
     while (fin >> noskipws >> ch) {
-        cout << ch;
-        ling.lerAfd(ch, i);
-        i++;
+
+        if (ver == 3 && ch == '<')
+            ver = 4;
+
+        if (ver == 0 && ch == 'o')
+            ver++;
+        else if (ver == 1 && ch == 'n')
+            ver++;
+        else if (ver == 2 && ch == '>')
+            ver++;
+        else if (ver == 3)
+        {
+            cout << ch;
+            ling.lerAfd(ch, i);
+            i++;
+        }
+        else if (ver == 4);
+        else
+            ver = 0;
     }
 
+    ling.lerAfd('/', i);
+
     ling.autom();
+
+    ling.verSenten();
     
 }
