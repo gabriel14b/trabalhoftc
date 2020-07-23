@@ -1,0 +1,319 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <algorithm>
+#include <iostream>
+#include <string.h>
+#include <list>
+#include <vector>
+#include <stdio.h>
+
+using namespace std;
+
+class afd
+{
+    int i = 0, x = 0, y = 0, est = 0;
+    int fpar = 0, ffech = 0, ffin = 0, foper = 0, memx = 0, memy = 0;
+
+    std::vector<char>* lr = new std::vector<char>();
+    std::vector<int>* ver = new std::vector<int>();
+    std::vector<int>* final = new std::vector<int>();
+    std::vector<int>* ests = new std::vector<int>();
+
+    char automa[50][50] = {}, tran[50][50] = {}, vinput[10] = {};
+    int vini[10] = {}, vfin[10] = {};
+
+public:
+    afd(char a) { }
+    void lerAfd(char a);
+    void autom();
+    void construct(int w, int e);
+    void printAutom();
+};
+
+void afd::lerAfd(char a)
+{
+    lr->push_back(a);
+    switch (a)
+    {
+    case '(':
+        ver->push_back(0);
+        break;
+    case ')':
+        ver->push_back(2);
+        break;
+    case '*':
+        ver->push_back(3);
+        break;
+    case '+':
+        ver->push_back(4);
+        break;
+    case '-':
+        ver->push_back(4);
+        break;
+    case '.':
+        ver->push_back(4);
+        break;
+    default:
+        ver->push_back(1);
+    }
+}
+
+void afd::autom()
+{
+    int size = ver->size();
+
+    for (y = 0; y <= size; y++)
+    {
+        for (x = 0; x <= size; x++)
+        {
+            automa[y][x] = ' ';
+        }
+    }
+    for (y = 0; y <= size; y++)
+    {
+        for (x = 0; x <= size; x++)
+        {
+            tran[y][x] = '-';
+        }
+    }
+    x = 0;
+    y = 0;
+
+    cout << "\n";
+    for  (i = 0; i < size; (i++))
+    {
+        if (ver->at(i) == 2)
+        {
+            automa[y][x] = lr->at(i);
+            cout << automa[y][x];
+            cout << "\n";
+            y++;
+            x = 0;
+        }
+        else if (ver->at(i) == 3)
+        {
+            automa[y][x] = lr->at(i);
+            cout << automa[y][x];
+            cout << "\n";
+            y++;
+            x = 0;
+        }
+        else
+        {
+            automa[y][x] = lr->at(i);
+            cout << automa[y][x];
+            x++;
+            if (ver->at(i) == 0 && x != 1)
+            {
+                cout << "\n";
+                y++;
+                x = 0;
+            }
+        }
+    }
+    x = 0;
+
+
+    for (y = 0; y < size && automa[y][x] != ' '; y++)
+    {
+        construct(y,est);
+        x = 0;
+        if (ffech == 1)
+        {
+            y++;
+            ffech = 0;
+        }
+    }
+
+    printAutom();
+
+}
+
+
+void afd::construct(int w, int e)
+{
+    int ini = 0, v, vf = 0, vi = 0, size = lr->size();
+
+    if (ests->size() != 0)
+    {
+        ests->pop_back();
+    }
+
+
+    for (v = 0; v < 10; v++)
+    {
+        vini[v] = 0;
+        vfin[v] = 0;
+        vinput[v] = ' ';
+    }
+    v = 0;
+
+    if (automa[w + 1][x] == '*')
+        ffech = 1;
+    if (automa[w][x] == '(')
+        fpar = 1;
+
+    x = 0;
+
+    if (fpar == 1)
+        x++;
+
+    for (x; x < size && automa[w][x] != ')' && automa[w][x] != ' '; x++)
+    {
+        if (automa[w][x] == '+')
+        {
+            x++;
+            if (ffech == 1)
+            {
+                ests->push_back(est);
+                vini[v] = est + 1;
+                vinput[v] = automa[w][x];
+                if (v > 0)
+                    vfin[v - 1] = est;
+                v++;
+            }
+            tran[e][est + 1] = automa[w][x];
+            est++;
+            final->push_back(0);
+        }
+        else
+        {
+            if (ini == 0 && ffech == 1)
+            {
+                vini[v] = est + 1;
+                vinput[v] = automa[w][x];
+                ini = 1;
+                tran[e][est + 1] = automa[w][x];
+                v++;
+            }
+            else
+                tran[est][est + 1] = automa[w][x];
+            est++;
+            final->push_back(0);
+        }
+    }
+
+    final->push_back(1);
+
+
+    if (ffech == 1 && v > 0)
+    {
+        vfin[v - 1] = est;
+        for (vf = 0; vf < v; vf++)
+        {
+            for (vi = 0; vi < v; vi++)
+            {
+                tran[vfin[vf]][vini[vi]] = vinput[vi];
+            }
+        }
+    }
+
+    for (v = 0; v < 10; v++)
+    {
+        vini[v] = 0;
+        vfin[v] = 0;
+        vinput[v] = ' ';
+    }
+    v = 0;
+
+    if (fpar == 1)
+        fpar = 0;
+
+    while (ests->size() != 0)
+    {
+        cout << ests->size();
+        if (automa[w+1][0] == '*' && automa[w + 2][0] != ' ')
+            construct(w + 2, ests->back());
+        else if (automa[w + 1][0] != ' ')
+            construct(w + 1, ests->back());
+    }
+
+}
+
+void afd::printAutom()
+{
+    int size = ver->size();
+
+    ofstream myfile;
+    myfile.open("AFD.txt");
+    myfile << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><!--Created with JFLAP 6.4.--><structure>&#13;\n";
+    myfile << "\t<type>fa</type>&#13;\n";
+    myfile << "\t<automaton>&#13;\n";
+    myfile << "\t\t<!--The list of states.-->&#13;\n";
+
+    for (i = 0; i <= est; i++)
+    {
+        myfile << "\t\t<state id=\"" << i << "\" name=\"q" << i << "\">&#13;\n";
+        myfile << "\t\t\t<x>0.0</x>&#13;\n";
+        myfile << "\t\t\t<y>0.0</y>&#13;\n";
+        if (i == 0)
+        {
+            myfile << "\t\t\t<initial/>&#13;\n";
+        }
+//        if (final->at(i) == 1)
+//        {
+//            myfile << "\t\t\t<final/>&#13;\n";
+//        }
+        myfile << "\t\t</state>&#13;\n";
+    }
+
+    myfile << "\t\t<!--The list of transitions.-->&#13;\n";
+
+    for (y = 0; y <= size; y++)
+    {
+        cout << "\n";
+        for (x = 0; x <= size; x++)
+        {
+            cout << tran[y][x];
+            if (tran[y][x] != '-')
+            {
+                myfile << "\t\t<transition>&#13;";
+                myfile << "\n\t\t\t<from>" << y << "</from>&#13;";
+                myfile << "\n\t\t\t<to>" << x << "</to>&#13;";
+                myfile << "\n\t\t\t<read>" << tran[y][x] << "</read>&#13;";
+                myfile << "\n\t\t</transition>&#13;\n";
+            }
+        }
+    }
+
+    myfile << "\t</automaton>&#13;\n";
+    myfile << "</structure>\n";
+
+    myfile.close();
+
+
+}
+
+int main() {
+
+
+    char ch = ' ';
+    int ver = 0;
+    fstream fin("Read.jff", fstream::in);
+
+    afd ling(ch);
+    while (fin >> noskipws >> ch) {
+
+        if (ver == 3 && ch == '<')
+            ver = 4;
+
+        if (ver == 0 && ch == 'o')
+            ver++;
+        else if (ver == 1 && ch == 'n')
+            ver++;
+        else if (ver == 2 && ch == '>')
+            ver++;
+        else if (ver == 3)
+        {
+            cout << ch;
+            ling.lerAfd(ch);
+        }
+        else if (ver == 4);
+        else
+            ver = 0;
+    }
+
+    ling.autom();
+
+}
