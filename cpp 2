@@ -19,6 +19,7 @@ class afd
     std::vector<int>* ver = new std::vector<int>();
     std::vector<int>* final = new std::vector<int>();
     std::vector<int>* ests = new std::vector<int>();
+    std::vector<int>* save = new std::vector<int>();
 
     char automa[50][50] = {}, tran[50][50] = {}, vinput[10] = {};
     int vini[10] = {}, vfin[10] = {};
@@ -61,18 +62,18 @@ void afd::lerAfd(char a)
 
 void afd::autom()
 {
-    int size = ver->size();
+    int size = ver->size(), mem = 0;
 
-    for (y = 0; y <= size; y++)
+    for (y = 0; y <= 49; y++)
     {
-        for (x = 0; x <= size; x++)
+        for (x = 0; x <= 49; x++)
         {
             automa[y][x] = ' ';
         }
     }
-    for (y = 0; y <= size; y++)
+    for (y = 0; y <= 49; y++)
     {
-        for (x = 0; x <= size; x++)
+        for (x = 0; x <= 49; x++)
         {
             tran[y][x] = '-';
         }
@@ -117,13 +118,17 @@ void afd::autom()
 
     for (y = 0; y < size && automa[y][x] != ' '; y++)
     {
-        construct(y,est);
-        x = 0;
-        if (ffech == 1)
+        cout << "\n" << y;
+        if (save->size() == 0)
+            construct(y, est);
+        else
         {
-            y++;
-            ffech = 0;
+            mem = save->back();
+            save->pop_back();
+            construct(y, mem);
         }
+
+        x = 0;
     }
 
     printAutom();
@@ -134,12 +139,12 @@ void afd::autom()
 void afd::construct(int w, int e)
 {
     int ini = 0, v, vf = 0, vi = 0, size = lr->size();
+    x = 0;
 
     if (ests->size() != 0)
     {
         ests->pop_back();
     }
-
 
     for (v = 0; v < 10; v++)
     {
@@ -154,19 +159,19 @@ void afd::construct(int w, int e)
     if (automa[w][x] == '(')
         fpar = 1;
 
-    x = 0;
+    cout << automa[w][x];
 
     if (fpar == 1)
         x++;
 
-    for (x; x < size && automa[w][x] != ')' && automa[w][x] != ' '; x++)
+    for (x; x < size && automa[w][x] != ')' && automa[w][x] != ' ' && automa[w][x] != '*'; x++)
     {
         if (automa[w][x] == '+')
         {
             x++;
+            ests->push_back(est);
             if (ffech == 1)
             {
-                ests->push_back(est);
                 vini[v] = est + 1;
                 vinput[v] = automa[w][x];
                 if (v > 0)
@@ -174,6 +179,7 @@ void afd::construct(int w, int e)
                 v++;
             }
             tran[e][est + 1] = automa[w][x];
+            cout << "\nDe:" << e << " para:" << est + 1 << " com:" << automa[w][x];
             est++;
             final->push_back(0);
         }
@@ -185,14 +191,19 @@ void afd::construct(int w, int e)
                 vinput[v] = automa[w][x];
                 ini = 1;
                 tran[e][est + 1] = automa[w][x];
+                cout << "\nde:" << e << " para:" << est + 1 << " com:" << automa[w][x];
                 v++;
             }
             else
                 tran[est][est + 1] = automa[w][x];
+            cout << "\nde:" << est << " para:" << est + 1 << " com:" << automa[w][x];
             est++;
             final->push_back(0);
         }
     }
+
+    if (save->size() == 0)
+        save->push_back(est);
 
     final->push_back(1);
 
@@ -219,11 +230,12 @@ void afd::construct(int w, int e)
 
     if (fpar == 1)
         fpar = 0;
+    if (ffech == 1)
+        ffech = 0;
 
     while (ests->size() != 0)
     {
-        cout << ests->size();
-        if (automa[w+1][0] == '*' && automa[w + 2][0] != ' ')
+        if (automa[w + 1][0] == '*' && automa[w + 2][0] != ' ')
             construct(w + 2, ests->back());
         else if (automa[w + 1][0] != ' ')
             construct(w + 1, ests->back());
@@ -260,10 +272,10 @@ void afd::printAutom()
 
     myfile << "\t\t<!--The list of transitions.-->&#13;\n";
 
-    for (y = 0; y <= size; y++)
+    for (y = 0; y <= size; y++) //subir tamanho para 50
     {
         cout << "\n";
-        for (x = 0; x <= size; x++)
+        for (x = 0; x <= size; x++) //subir tamanho para 50
         {
             cout << tran[y][x];
             if (tran[y][x] != '-')
