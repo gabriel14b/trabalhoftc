@@ -1,306 +1,266 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <algorithm>
-#include <iostream>
-#include <string.h>
-#include <list>
-#include <vector>
-#include <stdio.h>
+#include <__msvc_all_public_headers.hpp>
+#define col 5
+#define _s 30
 
 using namespace std;
 
-class afd
-{
-    int i = 0, x = 0, y = 0, est = 0;
-    int fpar = 0, ffech = 0, ffin = 0, foper = 0, memx = 0, memy = 0;
+int init[20], fin[20], a = 0, b = 0;
+string init_dfa[_s], fin_dfa[_s];
+int _a = 0, _b = 0;
 
-    std::vector<char>* lr = new std::vector<char>();
-    std::vector<int>* ver = new std::vector<int>();
-    std::vector<int>* final = new std::vector<int>();
-    std::vector<int>* ests = new std::vector<int>();
-    std::vector<int>* wsave = new std::vector<int>();
-    std::vector<int>* save = new std::vector<int>();
-
-    char automa[50][50] = {}, tran[50][50] = {}, vinput[10] = {};
-    int vini[10] = {}, vfin[10] = {};
-
-public:
-    afd(char a) { }
-    void lerAfd(char a);
-    void autom();
-    void construct(int w, int e);
-    void printAutom();
-    void verSent();
-};
-
-void afd::lerAfd(char a)
-{
-    lr->push_back(a);
-    switch (a)
-    {
-    case '(':
-        ver->push_back(0);
-        break;
-    case ')':
-        ver->push_back(2);
-        break;
-    case '*':
-        ver->push_back(3);
-        break;
-    case '+':
-        ver->push_back(4);
-        break;
-    case '-':
-        ver->push_back(4);
-        break;
-    case '.':
-        ver->push_back(4);
-        break;
-    default:
-        ver->push_back(1);
+void initialise(int nfa_table[][col]) {
+    for (int i = 0; i < 1000; i++) {
+        for (int j = 0; j < col; j++) {
+            nfa_table[i][j] = -1;
+        }
     }
 }
 
-void afd::autom()
-{
-    int size = ver->size(), mem = 0;
-    final->push_back(0);
 
-    for (y = 0; y <= 49; y++)
-    {
-        for (x = 0; x <= 49; x++)
-        {
-            automa[y][x] = ' ';
-        }
-    }
-    for (y = 0; y <= 49; y++)
-    {
-        for (x = 0; x <= 49; x++)
-        {
-            tran[y][x] = '-';
-        }
-    }
-    x = 0;
-    y = 0;
-
-    cout << "\n";
-    for  (i = 0; i < size; (i++))
-    {
-        if (ver->at(i) == 2)
-        {
-            automa[y][x] = lr->at(i);
-            cout << automa[y][x];
-            cout << "\n";
-            y++;
-            x = 0;
-        }
-        else if (ver->at(i) == 3)
-        {
-            automa[y][x] = lr->at(i);
-            cout << automa[y][x];
-            cout << "\n";
-            y++;
-            x = 0;
-        }
-        else
-        {
-            automa[y][x] = lr->at(i);
-            cout << automa[y][x];
-            x++;
-            if (ver->at(i) == 0 && x != 1)
-            {
-                cout << "\n";
-                y++;
-                x = 0;
-            }
-        }
-    }
-    x = 0;
-
-    construct(0, 0);
-
-    printAutom();
-
-    verSent();
+void reduce_fin(int x) {
+    for (int i = x; i < b - 1; i++)
+        fin[i] = fin[i + 1];
+    b -= 1;
 }
 
+/*
+ A função proc serve para simplificar a função e, como não temos um simbolo para concatenação, esta função providencia um para a equação.
+*/
 
-void afd::construct(int w, int e)
-{
-    int ini = 0, v, vf = 0, vi = 0, size = lr->size(), rep = 0, init = 0;
-    x = 0;
-
-    if (ests->size() != 0)
-    {
-        wsave->pop_back();
-        ests->pop_back();
-    }
-
-    for (v = 0; v < 10; v++)
-    {
-        vini[v] = 0;
-        vfin[v] = 0;
-        vinput[v] = ' ';
-    }
-    v = 0;
-
-    if (automa[w + 1][x] == '*')
-        ffech = 1;
-    if (automa[w][x] == '(')
-        fpar = 1;
-
-    if (fpar == 1)
-        x++;
-
-    for (x; x < size && automa[w][x] != ')' && automa[w][x] != ' ' && automa[w][x] != '*'; x++)
-    {
-        if (automa[w][x] == '+')
-        {
-            rep = 1;
-            x++;
-            ests->push_back(est);
-            wsave->push_back(w);
-            if (ffech == 1)
-            {
-                vini[v] = est + 1;
-                vinput[v] = automa[w][x];
-                if (v > 0)
-                    vfin[v - 1] = est;
-                v++;
-            }
-            tran[e][est + 1] = automa[w][x];
-            cout << "\nDe:" << e << " para:" << est + 1 << " com:" << automa[w][x];
-            est++;
-            final->push_back(0);
+string preproc(string s) {
+    char x[5000];
+    int l = s.length();
+    int j = 0;
+    x[j] = '(';
+    j += 1;
+    for (int i = 0; i < l; i++) {
+        x[j] = s[i];
+        j += 1;
+        if (s[i] >= 97 && s[i] <= 122 && s[i + 1] >= 97 && s[i + 1] <= 122) {
+            x[j] = '.';
+            j += 1;
         }
-        else
-        {
-            if (ini == 0 && ffech == 1)
-            {
-                vini[v] = est + 1;
-                vinput[v] = automa[w][x];
-                ini = 1;
-                tran[e][est + 1] = automa[w][x];
-                cout << "\ndE:" << e << " para:" << est + 1 << " com:" << automa[w][x];
-                v++;
-            }
-            else
-            {
-                if (init == 0)
-                {
-                    tran[e][est + 1] = automa[w][x];
-                    cout << "\ndE:" << e << " para:" << est + 1 << " com:" << automa[w][x];
-                    init = 1;
-                }
-                else
-                {
-                    tran[est][est + 1] = automa[w][x];
-                    cout << "\nde:" << est << " para:" << est + 1 << " com:" << automa[w][x];
-                }
-            } 
-            est++;
-            final->push_back(0);
+        else if (s[i] == ')' && s[i + 1] == '(') {
+            x[j] = '.';
+            j += 1;
+        }
+        else if (s[i] >= 97 && s[i] <= 122 && s[i + 1] == '(') {
+            x[j] = '.';
+            j += 1;
+        }
+        else if (s[i] == ')' && s[i + 1] >= 97 && s[i + 1] <= 122) {
+            x[j] = '.';
+            j += 1;
+        }
+        else if (s[i] == '*' && (s[i + 1] == '(' || (s[i + 1] >= 97 && s[i + 1] < 122))) {
+            x[j] = '.';
+            j += 1;
         }
     }
-    if (rep == 1)
-    {
-        ests->push_back(est);
-        wsave->push_back(w);
-        rep = 0;
-    }
-    
+    x[j] = ')';
+    j += 1;
+    string p;
+    for (int i = 0; i < j; i++)
+        p += x[i];
+    return p;
+}
 
+/*
+    converte a regex em uma notação postfix.
+*/
 
-    if (save->size() == 0)
-        save->push_back(est);
-
-
-    if (ffech == 1 && v > 0)
-    {
-        vfin[v - 1] = est;
-        for (vf = 0; vf < v; vf++)
-        {
-            for (vi = 0; vi < v; vi++)
-            {
-                tran[vfin[vf]][vini[vi]] = vinput[vi];
-            }
-        }
-    }
-
-    for (v = 0; v < 10; v++)
-    {
-        vini[v] = 0;
-        vfin[v] = 0;
-        vinput[v] = ' ';
-    }
-    v = 0;
-
-    if (fpar == 1)
-        fpar = 0;
-    if (ffech == 1)
-        ffech = 0;
-
-    while (ests->size() != 0 && automa[w + 1][0] != ' ')
-    {
-        cout << "\n";
-        if (automa[wsave->back() + 1][0] == '*' && automa[wsave->back() + 2][0] == ' ')
+string postfix(string s) {
+    int l = s.length();
+    char a[5000];
+    stack <char> ch;
+    int j = 0;
+    for (int i = 0; i < l; i++) {
+        char x = s[i];
+        switch (x) {
+        case 'a':   a[j] = 'a';
+            j += 1;
             break;
-        else
-        {
-            if (automa[wsave->back() + 1][0] == '*' && automa[wsave->back() + 2][0] != ' ')
-                construct(wsave->back() + 2, ests->back());
-            else if (automa[wsave->back() + 1][0] != ' ')
-                construct(wsave->back() + 1, ests->back());
-        }
-    }
-
-    if (automa[w + 1][0] == ' ')
-    {
-        final->pop_back();
-        final->push_back(1);
-        for (x = 0; x < est; x++)
-        {
-            if (tran[x][est] != '-')
-            {
-                if (tran[x][est] == '1')
-                {
-                    tran[est][est] = '1';
-                    tran[est][x] = '0';
-                    for (i = 0; i < est; i++)
-                    {
-                        if (tran[x][i] == '1')
-                        {
-                            tran[x][i] = '-';
-                        }
-                    }
-                }
-                else
-                {
-                    tran[est][est] = '0';
-                    tran[est][x] = '1';
-                    for (i = 0; i < est; i++)
-                    {
-                        if (tran[x][i] == '0')
-                        {
-                            tran[x][i] = '-';
-                        }
-                    }
-                }
+        case 'b':   a[j] = 'b';
+            j += 1;
+            break;
+        case '(':   ch.push('(');
+            break;
+        case ')':   while (!ch.empty()) {
+            if (ch.top() == '(') {
+                ch.pop();
+                break;
+            }
+            else {
+                a[j] = ch.top();
+                ch.pop();
+                j += 1;
             }
         }
+                break;
+        case '.':   if (ch.empty()) {
+            ch.push('.');
+        }
+                else {
+            char temp = ch.top();
+            if (temp == '(')
+                ch.push('.');
+            else if (temp == '*') {
+                a[j] = ch.top();
+                ch.pop();
+                j += 1;
+                if (ch.top() == '.') {
+                    a[j] = '.';
+                    j += 1;
+                }
+                else {
+                    ch.push('.');
+                }
+            }
+            else if (temp == '.') {
+                a[j] = ch.top();
+                ch.pop();
+                j += 1;
+                ch.push('.');
+            }
+            else if (temp == '|') {
+                ch.push('.');
+            }
+        }
+                break;
+        case '|':   if (ch.empty()) {
+            ch.push('|');
+        }
+                else {
+            char temp = ch.top();
+            if (temp == '(')
+                ch.push('|');
+            else if (temp == '*') {
+                a[j] = ch.top();
+                ch.pop();
+                j += 1;
+                ch.push('|');
+            }
+            else if (temp == '.') {
+                a[j] = ch.top();
+                j += 1;
+                ch.pop();
+                ch.push('|');
+            }
+        }
+                break;
+        case '*':   if (ch.empty()) {
+            ch.push('*');
+        }
+                else {
+            char temp = ch.top();
+            if (temp == '(' || temp == '.' || temp == '|')
+                ch.push('*');
+            else {
+                a[j] = ch.top();
+                ch.pop();
+                j += 1;
+                ch.push('*');
+            }
+        }
+                break;
+        }
     }
-    else if (automa[w + 1][0] == '*' && automa[w + 2][0] == ' ')
-    {
-        final->pop_back();
-        final->push_back(1);
+    string p;
+    for (int i = 0; i < j; i++) {
+        p += a[i];
     }
-
+    return p;
 }
 
-void afd::printAutom()
-{
-    int size = ver->size();
+/*
+    Esta função converte a função postfix da expreção regular
+    em um Autômato Finito Deterministico (AFD) compatível.
+*/
+
+int reg_afn(string s, int nfa_table[][col]) {
+    int l = s.length();
+    int states = 1;
+    int m, n, j, counter;
+    for (int i = 0; i < l; i++) {
+        char x = s[i];
+        switch (x) {
+        case 'a': nfa_table[states][0] = states;
+            init[a] = states;
+            a += 1;
+            states += 1;
+            nfa_table[states - 1][1] = states;
+            fin[b] = states;
+            b += 1;
+            nfa_table[states][0] = states;
+            states += 1;
+            break;
+        case 'b': nfa_table[states][0] = states;
+            init[a] = states;
+            a += 1;
+            states += 1;
+            nfa_table[states - 1][2] = states;
+            fin[b] = states;
+            b += 1;
+            nfa_table[states][0] = states;
+            states += 1;
+            break;
+        case '.': m = fin[b - 2];
+            n = init[a - 1];
+            nfa_table[m][3] = n;
+            reduce_fin(b - 2);  //reduz o estado final
+            a -= 1;           //reduz os estados iniciais
+            break;
+        case '|': for (j = a - 1, counter = 0; counter < 2; counter++) {
+            m = init[j - counter];
+            nfa_table[states][3 + counter] = m;
+        }
+                a = a - 2;
+                init[a] = states;
+                a += 1;
+                nfa_table[states][0] = states;
+                states += 1;
+                for (j = b - 1, counter = 0; counter < 2; counter++) {
+                    m = fin[j - counter];
+                    nfa_table[m][3] = states;
+                }
+                b = b - 2;
+                fin[b] = states;
+                b += 1;
+                nfa_table[states][0] = states;
+                states += 1;
+                break;
+        case '*': m = init[a - 1];
+            nfa_table[states][3] = m;
+            nfa_table[states][0] = states;
+            init[a - 1] = states;
+
+            states += 1;
+            n = fin[b - 1];
+            nfa_table[n][3] = m;
+            nfa_table[n][4] = states;
+            nfa_table[states - 1][4] = states;
+            fin[b - 1] = states;
+            nfa_table[states][0] = states;
+            states += 1;
+            break;
+        }
+    }
+    return states;
+}
+
+
+void print_tabela_afd(string afd_tab[][3], int est) {
+
+    int j = 0, sent = 1;
+    char ch, atual;
+    bool ver = true, end = false;
+
+    std::vector<char>* estados = new std::vector<char>();
+    std::vector<char>* from = new std::vector<char>();
+    std::vector<char>* to = new std::vector<char>();
+    std::vector<char>* with = new std::vector<char>();
+    std::vector<char>* ini = new std::vector<char>();
+    std::vector<char>* fin = new std::vector<char>();
 
     ofstream myfile;
     myfile.open("AFD.txt");
@@ -309,39 +269,89 @@ void afd::printAutom()
     myfile << "\t<automaton>&#13;\n";
     myfile << "\t\t<!--The list of states.-->&#13;\n";
 
-    for (i = 0; i <= est; i++)
+    cout << endl << endl;
+    for (int i = 0; i < 60; i++)
+        cout << "*";
+    cout << endl << endl;
+    cout << setw(43) << "TABELA DE ESTADOS DO AFD" << endl << endl;
+    cout << setw(10) << "Estados" << setw(10) << "a" << setw(10) << "b" << endl;
+    for (int i = 0; i < 60; i++)
+        cout << "-";
+    cout << endl;
+    for (int i = 0; i < est; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (j == 0)
+            {
+                estados->push_back(afd_tab[i][j][1]);
+            }
+            else if (j == 1 && afd_tab[i][j][0] == 'q')
+            {
+                from->push_back(afd_tab[i][j - 1][1]);
+                to->push_back(afd_tab[i][j][1]);
+                with->push_back('a');
+            }
+            else if (j == 2 && afd_tab[i][j][0] == 'q')
+            {
+                from->push_back(afd_tab[i][j - 2][1]);
+                to->push_back(afd_tab[i][j][1]);
+                with->push_back('b');
+            }
+            cout << setw(10) << afd_tab[i][j];
+        }
+        cout << endl;
+    }
+    cout << endl;
+    for (int i = 0; i < 60; i++)
+        cout << "*";
+    cout << endl;
+
+
+    cout << "estado/s inicial/is: ";
+    for (int i = 0; i < _a; i++)
     {
-        myfile << "\t\t<state id=\"" << i << "\" name=\"q" << i << "\">&#13;\n";
+        ini->push_back(init_dfa[i][1]);
+        cout << init_dfa[i][1];
+    }
+    cout << endl;
+    cout << "estado/s final/is: ";
+    for (int i = 0; i < _b; i++)
+    {
+        fin->push_back(fin_dfa[i][1]);
+        cout << fin_dfa[i][1];
+    }
+    cout << endl << endl;
+    for (int i = 0; i < 60; i++)
+        cout << "-";
+    cout << endl << endl;
+
+
+    for (int i = 0; i < estados->size(); i++) //criando estados no arquivo JFLAP.
+    {
+        myfile << "\t\t<state id=\"" << estados->at(i) << "\" name=\"q" << estados->at(i) << "\">&#13;\n";
         myfile << "\t\t\t<x>0.0</x>&#13;\n";
         myfile << "\t\t\t<y>0.0</y>&#13;\n";
-        if (i == 0)
+        for (int j = 0; j < ini->size(); j++)
         {
-            myfile << "\t\t\t<initial/>&#13;\n";
+            if (ini->at(j) == estados->at(i))
+                myfile << "\t\t\t<initial/>&#13;\n";
         }
-        if (final->at(i) == 1)
+        for (int j = 0; j < fin->size(); j++)
         {
-            myfile << "\t\t\t<final/>&#13;\n";
+            if (fin->at(j) == estados->at(i))
+                myfile << "\t\t\t<final/>&#13;\n";
         }
         myfile << "\t\t</state>&#13;\n";
     }
 
     myfile << "\t\t<!--The list of transitions.-->&#13;\n";
 
-    for (y = 0; y <= size; y++) //subir tamanho para 50
+    for (int i = 0; i < from->size(); i++) //criando transições no arquivo JFLAP.
     {
-        cout << "\n";
-        for (x = 0; x <= size; x++) //subir tamanho para 50
-        {
-            cout << tran[y][x];
-            if (tran[y][x] != '-')
-            {
-                myfile << "\t\t<transition>&#13;";
-                myfile << "\n\t\t\t<from>" << y << "</from>&#13;";
-                myfile << "\n\t\t\t<to>" << x << "</to>&#13;";
-                myfile << "\n\t\t\t<read>" << tran[y][x] << "</read>&#13;";
-                myfile << "\n\t\t</transition>&#13;\n";
-            }
-        }
+        myfile << "\t\t<transition>&#13;";
+        myfile << "\n\t\t\t<from>" << from->at(i) << "</from>&#13;";
+        myfile << "\n\t\t\t<to>" << to->at(i) << "</to>&#13;";
+        myfile << "\n\t\t\t<read>" << with->at(i) << "</read>&#13;";
+        myfile << "\n\t\t</transition>&#13;\n";
     }
 
     myfile << "\t</automaton>&#13;\n";
@@ -349,68 +359,351 @@ void afd::printAutom()
 
     myfile.close();
 
-}
-
-void afd::verSent()
-{
-    int j = 0, atual, sent = 1;
-    char ch, op;
-    bool ver = true;
-
-    atual = 0;
+    atual = ini->at(0);
 
     cout << "\n\n\n";
-    fstream sen("sentencas.txt", fstream::in);
+    fstream sen("sentencas.txt", fstream::in); //leitura das sentenças para comparação com o automato
     while (sen >> noskipws >> ch)
     {
         cout << ch;
-        if (ver == true && ch != '\n')
+        if (ch == '\n')
         {
-            for (j = 0; j < 49; j++)
+            for (j = 0; j < fin->size(); j++)
             {
-                ver = false;
-                if (tran[atual][j] == ch)
+                if (fin->at(j) == atual)
                 {
-                    cout << "\nde:" << atual << " para:" << j << " com:" << ch;
-                    atual = j;
-                    ver = true;
-                    break;
+                    end = true;
                 }
             }
         }
-        else if (ver == true && ch == '\n' && final->at(atual) == 1)
+        if (ver == true && ch != '\n')
+        {
+            for (j = 0; j < with->size(); j++)
+            {
+                ver = false;
+                if (from->at(j) == atual && with->at(j) == ch)
+                {
+                    atual = to->at(j);
+                    ver = true;
+                    break;
+                }
+            } 
+        }
+        else if (ver == true && ch == '\n' && end == true)
         {
             cout << "Sentenca numero " << sent << " pertence a linguagem!\n\n";
             sent++;
-            atual = 0;
+            atual = ini->at(0);
+            end = false;
         }
-        else if ((ver == false && ch == '\n') || (ch == '\n' && final->at(atual) == 0))
+        else if ((ver == false && ch == '\n') || (ch == '\n' && end != true))
         {
             cout << "Sentenca numero " << sent << " nao pertence a linguagem!\n\n";
             sent++;
-            atual = 0;
+            atual = ini->at(0);
             ver = true;
         }
     }
-    if (ver == true)
+    for (j = 0; j < fin->size(); j++)
+    {
+        if (fin->at(j) == atual)
+        {
+            end = true;
+        }
+    }
+    if (ver == true && end == true)
     {
         cout << "\nSentenca numero " << sent << " pertence a linguagem!\n\n";
     }
-    else if (ver == false)
+    else
     {
         cout << "\nSentenca numero " << sent << " nao pertence a linguagem!\n\n";
     }
+}
+
+
+vector <int> fecho(int nfa_table[][col], int x) {
+    stack <int> s;
+    map <int, int> m;
+    vector <int> v;
+    int y;
+
+    s.push(x);
+    m[x] = 1;
+
+    while (!s.empty()) {
+        y = s.top();
+        s.pop();
+        if (nfa_table[y][3] == -1)
+            continue;
+        else {
+            s.push(nfa_table[y][3]);
+            m[nfa_table[y][3]] = 1;
+
+            if (nfa_table[y][4] == -1)
+                continue;
+            else {
+                s.push(nfa_table[y][4]);
+                m[nfa_table[y][4]] == -1;
+            }
+        }
+    }
+
+    map <int, int> ::iterator itr;
+    itr = m.begin();
+
+    while (itr != m.end()) {
+        v.push_back(itr->first);
+        itr++;
+    }
+    return v;
+}
+
+long long int map_it(vector <int> v, int y) {
+    long long int x = 0, m = 1;
+    while (y--) {
+        m *= 10;
+    }
+
+    vector<int> ::iterator it = v.begin();
+    while (it != v.end()) {
+        x += *it * m;
+        m /= 10;
+        it += 1;
+    }
+    return x / 10;
+}
+
+/*
+    A função state_name() está renomenado todos os novos estados do AFD.
+*/
+string state_name(int i) {
+    char s = 'q';
+    string p;
+    p += s;
+    if (i == 0) {
+        p += '0';
+        return p;
+    }
+    int a[100];
+    int j = 0;
+    while (i > 0) {
+        int x = i % 10;
+        a[j] = x;
+        j += 1;
+        i = i / 10;
+    }
+    for (int i = j - 1; i >= 0; i--) {
+        int x = a[i];
+        switch (x) {
+        case 0: p += '0';
+            break;
+        case 1: p += '1';
+            break;
+        case 2: p += '2';
+            break;
+        case 3: p += '3';
+            break;
+        case 4: p += '4';
+            break;
+        case 5: p += '5';
+            break;
+        case 6: p += '6';
+            break;
+        case 7: p += '7';
+            break;
+        case 8: p += '8';
+            break;
+        case 9: p += '9';
+            break;
+
+        }
+    }
+    return p;
+}
+
+void check_init(vector <int> v, string s) {
+    for (int i = 0; i < v.size(); i++) {
+        if (v[i] == init[0]) {
+            init_dfa[_a] = s;
+            _a += 1;
+        }
+    }
+}
+
+void check_fin(vector <int> v, string s) {
+    for (int i = 0; i < v.size(); i++) {
+        if (v[i] == fin[0]) {
+            fin_dfa[_b] = s;
+            _b += 1;
+        }
+    }
+}
+
+bool check_valid(string palavra) {
+    int len = palavra.length();
+    int i = 0;
+    for (i = 0; i < len; i++) {
+        if (palavra[i] == 'a' || palavra[i] == 'b')
+            continue;
+        else
+            return false;
+
+    }
+
+    if (i == len)
+        return true;
+}
+
+int afn_afd(int tabela_afd[][col], int ests, string tab_afd[][3]) {
+    bool flag[100];
+    memset(flag, true, sizeof(flag)); //para garantir que todos os estados de fecho foram encontrados
+
+    int est = 0, j = 0;
+    map <vector<int>, string> map_est;
+    vector <int> v, v1, v2, v3, v4;
+
+    v = fecho(tabela_afd, init[0]);
+    flag[init[a]] = false;
+
+    map_est[v] = state_name(j++);
+    check_init(v, map_est[v]);  //para verificar se o estado atual é inicial ou não
+    check_fin(v, map_est[v]);
+
+    stack < vector<int> > st;
+    st.push(v);
+    // transição do fecho para o simbolo de input a
+    int counter = 0;
+    while (true) {
+
+        while (!st.empty()) {
+            vector <int> v;
+            v = st.top();
+            st.pop();
+            counter += 1;
+            tab_afd[est][0] = map_est[v];       //encontra a transição de um estado 'a' e 'b'
+
+            for (int i = 0; i < v.size(); i++) {
+                flag[v[i]] = false;
+                int temp = tabela_afd[v[i]][1];      //com input a
+                int temp1 = tabela_afd[v[i]][2];     //com input b
+                if (temp >= 0)
+                    v1.push_back(temp);
+                if (temp1 >= 0)
+                    v3.push_back(temp1);
+            }
+
+            map <int, int> map_temp, map_temp1;  //removendo estado duplicados
+            map <int, int> ::iterator it;
+
+            for (int i = 0; i < v1.size(); i++) {
+                v2 = fecho(tabela_afd, v1[i]);
+                for (int j = 0; j < v2.size(); j++) {
+                    map_temp[v2[j]] = 1;
+                }
+                v2.clear();
+            }
+
+            for (int i = 0; i < v3.size(); i++) {
+                v4 = fecho(tabela_afd, v3[i]);
+                for (int j = 0; j < v4.size(); j++) {
+                    map_temp1[v4[j]] = 1;
+                }
+                v4.clear();
+            }
+
+
+            for (it = map_temp.begin(); it != map_temp.end(); it++) {
+                v2.push_back(it->first);
+                flag[it->first] = false;
+            }
+
+            for (it = map_temp1.begin(); it != map_temp1.end(); it++) {
+                v4.push_back(it->first);
+                flag[it->first] = false;
+            }
+
+            if (v2.empty()) {
+                tab_afd[est][1] = "--";
+            }
+            else {
+                string t = map_est[v2];
+                char flag1 = t[0];
+                if (flag1 == 'q') {
+                    tab_afd[est][1] = map_est[v2];   //checando se v2 já foi mapeado ou não
+                }
+                else {
+                    tab_afd[est][1] = state_name(j++);
+                    map_est[v2] = tab_afd[est][1];
+                    check_init(v2, map_est[v2]);
+                    check_fin(v2, map_est[v2]);
+                    st.push(v2);                //estado não mapeados serão colocados de volta na pilha
+                }
+            }
+
+            if (v4.empty()) {
+                tab_afd[est][2] = "--";
+            }
+            else {
+                string t = map_est[v4];
+                char flag1 = t[0];
+                if (flag1 == 'q') {
+                    tab_afd[est][2] = map_est[v4];
+                }
+                else {
+                    tab_afd[est][2] = state_name(j++);
+                    map_est[v4] = tab_afd[est][2];
+                    check_init(v4, map_est[v4]);
+                    check_fin(v4, map_est[v4]);
+                    st.push(v4);
+                }
+            }
+            v1.clear();
+            v2.clear();
+            v3.clear();
+            v4.clear();
+            est += 1;
+        }
+
+        int k = 1;
+        for (k = 1; k < ests; k++) {
+            if (flag[k]) {
+                v = fecho(tabela_afd, k);
+                map_est[v] = state_name(j++);
+                check_init(v, map_est[v]);
+                check_fin(v, map_est[v]);
+                cout << endl << map_est[v] << " representa : ";
+                for (int i = 0; i < v.size(); i++)
+                    cout << v[i] << " ";
+                cout << endl;
+                st.push(v);
+                break;
+            }
+        }
+
+        if (k == ests)
+            break;
+
+    }
+
+    print_tabela_afd(tab_afd, est);     //função para imprimir a tabela de AFD
+
+    return est;
+
 
 }
 
+
 int main() {
-
-
+   
+    int afd_table[1000][col];
+    initialise(afd_table);
+    int ests = 0, ver = 0;
     char ch = ' ';
-    int ver = 0;
+    string s;
+
     fstream fin("Read.jff", fstream::in);
 
-    afd ling(ch);
     while (fin >> noskipws >> ch) {
 
         if (ver == 3 && ch == '<')
@@ -425,13 +718,25 @@ int main() {
         else if (ver == 3)
         {
             cout << ch;
-            ling.lerAfd(ch);
+            if (ch == '+')
+                ch = '|';
+            s.push_back(ch);
         }
         else if (ver == 4);
         else
             ver = 0;
     }
 
-    ling.autom();
+    s = preproc(s);
 
+    s = postfix(s);
+
+    ests = reg_afn(s, afd_table);
+
+    string afd_tab[100][3];
+    int afd_est = 0;
+    afd_est = afn_afd(afd_table, ests, afd_tab);
+
+
+    return 0;
 }
